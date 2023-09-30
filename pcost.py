@@ -16,12 +16,18 @@ def calc_cost(file_handle: TextIO) -> float:
 
 
 def portfolio_cost(filename: str) -> float:
-    """Calculates the cost of a portfolio of stocks in a datafile"""
-    with open(filename) as f:
-        return calc_cost(f)
+    """Opens the portfolio datafile and uses a helper function to calcuate its cost"""
+    cost = 0.0
+    try:
+        with open(filename) as f:
+            cost = calc_cost(f)
+    except FileNotFoundError:
+        print(f"{filename} was not found.")
+    finally:
+        print(f"Portfolio cost is ${cost:>,.2f}")
+        return cost
 
 
 if __name__ == "__main__":
     filename = "Data/portfolio.dat"
-    cost = portfolio_cost(filename)
-    print(f"Portfolio cost is ${cost:>,.2f}")
+    portfolio_cost(filename)
