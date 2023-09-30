@@ -4,7 +4,7 @@ from typing import TextIO
 
 
 def calc_cost(file_handle: TextIO) -> float:
-    """Calculates the cost of a portfolio of stocks"""
+    """Read the datafile and calculates the cost of a portfolio"""
     cost = 0.0
     for line in file_handle.readlines():
         try:
