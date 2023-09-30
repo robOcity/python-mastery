@@ -7,11 +7,11 @@ chars = "\|/"
 
 
 def draw(rows, columns):
-    for row in rows:
+    for row in range(rows):
         print("".join(random.choice(chars) for _ in range(columns)))
 
 
 if __name__ == "__main__":
-    if len(sys.args) != 3:
+    if len(sys.argv) != 3:
         raise SystemExit("Usage: art.py rows columns")
-    draw(sys.argv[1], sys.argv[2])
+    draw(int(sys.argv[1]), int(sys.argv[2]))
