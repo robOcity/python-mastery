@@ -4,7 +4,7 @@ from typing import TextIO
 
 
 def calc_cost(file_handle: TextIO) -> float:
-    """Calculates the cost of a portfolio of stocks in a datafile"""
+    """Calculates the cost of a portfolio of stocks"""
     cost = 0.0
     for line in file_handle.readlines():
         try:
@@ -15,8 +15,13 @@ def calc_cost(file_handle: TextIO) -> float:
     return cost
 
 
+def portfolio_cost(filename: str) -> float:
+    """Calculates the cost of a portfolio of stocks in a datafile"""
+    with open(filename) as f:
+        return calc_cost(f)
+
+
 if __name__ == "__main__":
     filename = "Data/portfolio.dat"
-    with open(filename) as f:
-        cost = calc_cost(f)
+    cost = portfolio_cost(filename)
     print(f"Portfolio cost is ${cost:>,.2f}")
