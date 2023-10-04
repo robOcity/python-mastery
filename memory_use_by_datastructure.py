@@ -6,14 +6,14 @@ To make accurate measurements of memory consumption, the multiprocessing package
 used to start a separate process for creation of each different type of object collection.
 
 Results:
-----------------------------------------------------------------------------------
-SLOTS     : Memory: 134,210,117 bytes  Instances: 577,563  Object Size: 233 bytes
-TUPLE     : Memory: 138,830,457 bytes  Instances: 577,563  Object Size: 241 bytes
-NAMEDTUPLE: Memory: 143,451,193 bytes  Instances: 577,563  Object Size: 249 bytes
-CLASS     : Memory: 185,035,469 bytes  Instances: 577,563  Object Size: 321 bytes
-DATACLASS : Memory: 185,035,480 bytes  Instances: 577,563  Object Size: 321 bytes
-DICTIONARY: Memory: 231,240,417 bytes  Instances: 577,563  Object Size: 401 bytes
-----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+SLOTS     :  Memory: 128.0 MB  Peak: 128.0 MB  Instances: 577,563  Object Size: 233 bytes
+TUPLE     :  Memory: 132.4 MB  Peak: 132.4 MB  Instances: 577,563  Object Size: 241 bytes
+NAMEDTUPLE:  Memory: 136.8 MB  Peak: 136.8 MB  Instances: 577,563  Object Size: 249 bytes
+DATACLASS :  Memory: 176.5 MB  Peak: 176.5 MB  Instances: 577,563  Object Size: 321 bytes
+CLASS     :  Memory: 176.5 MB  Peak: 176.5 MB  Instances: 577,563  Object Size: 321 bytes
+DICTIONARY:  Memory: 220.5 MB  Peak: 220.6 MB  Instances: 577,563  Object Size: 401 bytes
+------------------------------------------------------------------------------------------
 """
 
 
@@ -187,9 +187,17 @@ def measure_memory(filename: str, func: Callable, queue: Queue) -> None:
     tracemalloc.start()
     rows = read_rides(filename, func)
     current, peak = tracemalloc.get_traced_memory()
+    MEGA_BYTE_SIZE = 2**20
     # IPC communication from spawned process
     queue.put(
-        (func, current, peak, len(rows), math.ceil(current / len(rows))), block=False
+        (
+            func,
+            round(current / MEGA_BYTE_SIZE, 1),
+            round(peak / MEGA_BYTE_SIZE, 1),
+            len(rows),
+            math.ceil(current / len(rows)),
+        ),
+        block=False,
     )
 
 
@@ -219,5 +227,5 @@ if __name__ == "__main__":
     results = sorted(results, key=lambda x: x[1])
     for func, current, peak, rows, bytes_per_object in results:
         print(
-            f"{func.__name__[6:].upper():<10}: Memory: {current:,} bytes  Instances: {rows:,}  Object Size: {bytes_per_object:,} bytes"
+            f"{func.__name__[6:].upper():<10}:  Memory: {current} MB  Peak: {peak} MB  Instances: {rows:,}  Object Size: {bytes_per_object:,} bytes"
         )
