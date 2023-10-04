@@ -20,8 +20,9 @@ DICTIONARY: Memory: 231,240,417 bytes  Instances: 577,563  Object Size: 401 byte
 import csv
 import math
 from collections import namedtuple
-from multiprocessing import Process, Manager, Queue
+from multiprocessing import Process, Queue
 from dataclasses import dataclass
+from typing import List, Tuple, Dict, NamedTuple, Union, Callable
 
 
 class Row:
@@ -77,10 +78,10 @@ class DataclassRow:
     rides: str
 
 
-NamedtupleRow = namedtuple("Row", ["route", "date", "daytype", "rides"])
+DataCollection = List[Union[Dict, Tuple, NamedTuple, Row, SlotsRow, DataclassRow]]
 
 
-def build_tuple(row):
+def build_tuple(row: List[str]) -> Tuple[str, str, str, str]:
     """Constructs a tuple containing row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -95,7 +96,7 @@ def build_tuple(row):
     return (route, date, daytype, rides)
 
 
-def build_dictionary(row):
+def build_dictionary(row: List[str]) -> Dict[str, str]:
     """Constructs a dictionary containing row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -106,7 +107,10 @@ def build_dictionary(row):
     return {"route": row[0], "date": row[1], "daytype": row[2], "rides": row[3]}
 
 
-def build_namedtuple(row):
+NamedtupleRow = namedtuple("NamedtupleRow", ["route", "date", "daytype", "rides"])
+
+
+def build_namedtuple(row: List[str]) -> NamedtupleRow:
     """Constructs a namedtuple containing row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -117,7 +121,7 @@ def build_namedtuple(row):
     return NamedtupleRow(row[0], row[1], row[2], row[3])
 
 
-def build_class(row):
+def build_class(row: List[str]) -> Row:
     """Constructs a class instance representing a row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -128,7 +132,7 @@ def build_class(row):
     return Row(row)
 
 
-def build_slots(row):
+def build_slots(row: List[str]) -> SlotsRow:
     """Constructs a memory efficient class instance representing a row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -139,7 +143,7 @@ def build_slots(row):
     return SlotsRow(row)
 
 
-def build_dataclass(row):
+def build_dataclass(row: List[str]) -> DataclassRow:
     """Constructs a dataclass instance representing a row of bus data.
     Args:
         A row (tuple) of CTA bus data.
@@ -150,7 +154,7 @@ def build_dataclass(row):
     return DataclassRow(row[0], row[1], row[2], row[3])
 
 
-def read_rides(filename, func):
+def read_rides(filename: str, func: Callable) -> DataCollection:
     """Reads in the CTA bus data, using a function to build the data container.
 
     Args:
@@ -166,12 +170,13 @@ def read_rides(filename, func):
         rows = csv.reader(f)
         headings = next(rows)
         for row in rows:
+            print(f"{row} is a {type(row)}")
             record = func(row)
             records.append(record)
     return records
 
 
-def measure_memory(filename, func, queue):
+def measure_memory(filename: str, func: Callable, queue: Queue) -> None:
     """Quantifies the current and peak memory needed to store a large collection of objects.
 
     Args:
@@ -199,8 +204,9 @@ if __name__ == "__main__":
         build_dataclass,
     ]
 
-    procs, results = [], []
-    que = Queue()  # Used for IPC communications
+    procs: List[Process] = []
+    results = []
+    que: Queue = Queue()  # Used for IPC communications
     for func in functions:
         proc = Process(target=measure_memory, args=("Data/ctabus.csv", func, que))
         procs.append(proc)
