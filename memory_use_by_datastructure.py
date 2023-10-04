@@ -170,7 +170,6 @@ def read_rides(filename: str, func: Callable) -> DataCollection:
         rows = csv.reader(f)
         headings = next(rows)
         for row in rows:
-            print(f"{row} is a {type(row)}")
             record = func(row)
             records.append(record)
     return records
