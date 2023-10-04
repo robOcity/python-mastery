@@ -1,9 +1,9 @@
 """readrides.py - Finds which data structures are the most memory efficient.
 Using city bus route data from the Chicago Transit Authority (CTA) containing 
 over half-a-million rows (trips) to build a large collection of objects. 
-The tracemalloc package determines how much the memory is being consummed.  
-To make accurate measurments of memory consumnption, the multiprocessing package is 
-used to start a separate process for creation of each differnt type of object collection.
+The tracemalloc package determines how much the memory is being consumed.  
+To make accurate measurements of memory consumption, the multiprocessing package is 
+used to start a separate process for creation of each different type of object collection.
 
 Results:
 ----------------------------------------------------------------------------------
