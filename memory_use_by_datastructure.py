@@ -1,15 +1,20 @@
-# readrides.py - Finds which data structures are the most memory efficient.
-# Uses multiprocessing to construct a large list of various data structures.
-#
-# Results
-# ----------------------------------------------------------------------------------
-# SLOTS     : Memory: 134,210,117 bytes  Instances: 577,563  Object Size: 233 bytes
-# TUPLE     : Memory: 138,830,457 bytes  Instances: 577,563  Object Size: 241 bytes
-# NAMEDTUPLE: Memory: 143,451,193 bytes  Instances: 577,563  Object Size: 249 bytes
-# CLASS     : Memory: 185,035,469 bytes  Instances: 577,563  Object Size: 321 bytes
-# DATACLASS : Memory: 185,035,480 bytes  Instances: 577,563  Object Size: 321 bytes
-# DICTIONARY: Memory: 231,240,417 bytes  Instances: 577,563  Object Size: 401 bytes
-# ----------------------------------------------------------------------------------
+"""readrides.py - Finds which data structures are the most memory efficient.
+Using city bus route data from the Chicago Transit Authority (CTA) containing 
+over half-a-million rows (trips) to build a large collection of objects. 
+The tracemalloc package determines how much the memory is being consummed.  
+To make accurate measurments of memory consumnption, the multiprocessing package is 
+used to start a separate process for creation of each differnt type of object collection.
+
+Results:
+----------------------------------------------------------------------------------
+SLOTS     : Memory: 134,210,117 bytes  Instances: 577,563  Object Size: 233 bytes
+TUPLE     : Memory: 138,830,457 bytes  Instances: 577,563  Object Size: 241 bytes
+NAMEDTUPLE: Memory: 143,451,193 bytes  Instances: 577,563  Object Size: 249 bytes
+CLASS     : Memory: 185,035,469 bytes  Instances: 577,563  Object Size: 321 bytes
+DATACLASS : Memory: 185,035,480 bytes  Instances: 577,563  Object Size: 321 bytes
+DICTIONARY: Memory: 231,240,417 bytes  Instances: 577,563  Object Size: 401 bytes
+----------------------------------------------------------------------------------
+"""
 
 
 import csv
@@ -20,6 +25,15 @@ from dataclasses import dataclass
 
 
 class Row:
+    """A row (tuple) of CTA bus data using a plain-python class.
+
+    Attributes:
+        route:   Column 1. The bus route ID number
+        date:    Column 2. A date string (MM/DD/YYYY)
+        daytype: Column 3. (U=Sunday/Holiday, A=Saturday, W=Weekday)
+        rides:   Column 4. Total number of rides that day (integer)
+    """
+
     def __init__(self, row) -> None:
         self.route = row[0]
         self.date = row[1]
@@ -28,6 +42,15 @@ class Row:
 
 
 class SlotsRow:
+    """A row (tuple) of CTA bus data using a python class with slots.
+
+    Attributes:
+        route:   Column 1. The bus route ID number
+        date:    Column 2. A date string (MM/DD/YYYY)
+        daytype: Column 3. (U=Sunday/Holiday, A=Saturday, W=Weekday)
+        rides:   Column 4. Total number of rides that day (integer)
+    """
+
     __slots__ = ["route", "date", "daytype", "rides"]
 
     def __init__(self, row) -> None:
@@ -39,6 +62,15 @@ class SlotsRow:
 
 @dataclass
 class DataclassRow:
+    """A row (tuple) of CTA bus data stored in a dataclass.
+
+    Attributes:
+        route:   Column 1. The bus route ID number
+        date:    Column 2. A date string (MM/DD/YYYY)
+        daytype: Column 3. (U=Sunday/Holiday, A=Saturday, W=Weekday)
+        rides:   Column 4. Total number of rides that day (integer)
+    """
+
     route: str
     date: str
     daytype: str
@@ -49,6 +81,13 @@ NamedtupleRow = namedtuple("Row", ["route", "date", "daytype", "rides"])
 
 
 def build_tuple(row):
+    """Constructs a tuple containing row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A tuple("route", "date", "daytype", "rides").
+    """
     route = row[0]
     date = row[1]
     daytype = row[2]
@@ -57,26 +96,71 @@ def build_tuple(row):
 
 
 def build_dictionary(row):
+    """Constructs a dictionary containing row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A dict containing the route, date, daytype, and rides.
+    """
     return {"route": row[0], "date": row[1], "daytype": row[2], "rides": row[3]}
 
 
 def build_namedtuple(row):
+    """Constructs a namedtuple containing row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A namedtuple containing the route, date, daytype, and rides.
+    """
     return NamedtupleRow(row[0], row[1], row[2], row[3])
 
 
 def build_class(row):
+    """Constructs a class instance representing a row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A class containing the route, date, daytype, and rides attributes.
+    """
     return Row(row)
 
 
 def build_slots(row):
+    """Constructs a memory efficient class instance representing a row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A memory efficient class containing the route, date, daytype, and rides attributes.
+    """
     return SlotsRow(row)
 
 
 def build_dataclass(row):
+    """Constructs a dataclass instance representing a row of bus data.
+    Args:
+        A row (tuple) of CTA bus data.
+
+    Return:
+        A dataclass containing the route, date, daytype, and rides attributes.
+    """
     return DataclassRow(row[0], row[1], row[2], row[3])
 
 
 def read_rides(filename, func):
+    """Reads in the CTA bus data, using a function to build the data container.
+
+    Args:
+        filename: The relative path to the data file
+        func:     The function to construct the data container
+
+    Return:
+        A list of data structures or class instances for a row of data.
+    """
+
     records = []
     with open(filename) as f:
         rows = csv.reader(f)
@@ -88,11 +172,18 @@ def read_rides(filename, func):
 
 
 def measure_memory(filename, func, queue):
+    """Quantifies the current and peak memory needed to store a large collection of objects.
+
+    Args:
+        filename: The CTA bus datafile to ingest
+        func:     Creates the data structure or class instance to hold the data
+        queue:    Used to communicate memory consumption values"""
     import tracemalloc
 
     tracemalloc.start()
     rows = read_rides(filename, func)
     current, peak = tracemalloc.get_traced_memory()
+    # IPC communication from spawned process
     queue.put(
         (func, current, peak, len(rows), math.ceil(current / len(rows))), block=False
     )
@@ -109,14 +200,14 @@ if __name__ == "__main__":
     ]
 
     procs, results = [], []
-    que = Queue()  # Used for inter-process communication
+    que = Queue()  # Used for IPC communications
     for func in functions:
         proc = Process(target=measure_memory, args=("Data/ctabus.csv", func, que))
         procs.append(proc)
         proc.start()
 
     for proc in procs:
-        result = que.get()
+        result = que.get()  # Get data from the spawned processes via IPC
         results.append(result)
         proc.join()
 
