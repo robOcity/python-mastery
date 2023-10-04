@@ -2,19 +2,20 @@
 # Uses multiprocessing to construct a large list of various data structures.
 #
 # Results
-# ------------------------------------------------------------------------------
-# BUILD_SLOTS          bytes: Current 134,209,781 bytes,  Peak 134,240,131 bytes
-# BUILD_TUPLE          bytes: Current 138,830,049 bytes,  Peak 138,860,399 bytes
-# BUILD_NAMEDTUPLE     bytes: Current 143,450,785 bytes,  Peak 143,481,135 bytes
-# BUILD_DATACLASS      bytes: Current 185,035,144 bytes,  Peak 185,065,494 bytes
-# BUILD_CLASS          bytes: Current 185,035,133 bytes,  Peak 185,065,483 bytes
-# BUILD_DICTIONARY     bytes: Current 231,238,905 bytes,  Peak 231,269,255 bytes
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+# SLOTS     : Memory: 134,210,117 bytes  Instances: 577,563  Object Size: 233 bytes
+# TUPLE     : Memory: 138,830,457 bytes  Instances: 577,563  Object Size: 241 bytes
+# NAMEDTUPLE: Memory: 143,451,193 bytes  Instances: 577,563  Object Size: 249 bytes
+# CLASS     : Memory: 185,035,469 bytes  Instances: 577,563  Object Size: 321 bytes
+# DATACLASS : Memory: 185,035,480 bytes  Instances: 577,563  Object Size: 321 bytes
+# DICTIONARY: Memory: 231,240,417 bytes  Instances: 577,563  Object Size: 401 bytes
+# ----------------------------------------------------------------------------------
 
 
 import csv
+import math
 from collections import namedtuple
-from multiprocessing import Process
+from multiprocessing import Process, Manager, Queue
 from dataclasses import dataclass
 
 
@@ -86,14 +87,14 @@ def read_rides(filename, func):
     return records
 
 
-def measure_memory(filename, func):
+def measure_memory(filename, func, queue):
     import tracemalloc
 
     tracemalloc.start()
     rows = read_rides(filename, func)
     current, peak = tracemalloc.get_traced_memory()
-    print(
-        f"{func.__name__[6:].upper():<10}: Current {current:,} bytes,  Peak {peak:,} bytes"
+    queue.put(
+        (func, current, peak, len(rows), math.ceil(current / len(rows))), block=False
     )
 
 
@@ -106,13 +107,21 @@ if __name__ == "__main__":
         build_slots,
         build_dataclass,
     ]
-    procs = []
 
-    # instantiate processes
+    procs, results = [], []
+    que = Queue()  # Used for inter-process communication
     for func in functions:
-        proc = Process(target=measure_memory, args=("Data/ctabus.csv", func))
+        proc = Process(target=measure_memory, args=("Data/ctabus.csv", func, que))
         procs.append(proc)
         proc.start()
 
     for proc in procs:
+        result = que.get()
+        results.append(result)
         proc.join()
+
+    results = sorted(results, key=lambda x: x[1])
+    for func, current, peak, rows, bytes_per_object in results:
+        print(
+            f"{func.__name__[6:].upper():<10}: Memory: {current:,} bytes  Instances: {rows:,}  Object Size: {bytes_per_object:,} bytes"
+        )
