@@ -5,7 +5,7 @@ The tracemalloc package determines how much the memory is being consumed.
 To make accurate measurements of memory consumption, the multiprocessing package is 
 used to start a separate process for creation of each different type of object collection.
 
-Results:
+Results from Mac Mini M1 running Python 3.10:
 ----------------------------------------------------------------------------------
 SLOTS     : Memory: 134,210,117 bytes  Instances: 577,563  Object Size: 233 bytes
 TUPLE     : Memory: 138,830,457 bytes  Instances: 577,563  Object Size: 241 bytes
@@ -187,9 +187,17 @@ def measure_memory(filename: str, func: Callable, queue: Queue) -> None:
     tracemalloc.start()
     rows = read_rides(filename, func)
     current, peak = tracemalloc.get_traced_memory()
+    MEGA_BYTE_SIZE = 2**20
     # IPC communication from spawned process
     queue.put(
-        (func, current, peak, len(rows), math.ceil(current / len(rows))), block=False
+        (
+            func,
+            round(current / MEGA_BYTE_SIZE, 1),
+            round(peak / MEGA_BYTE_SIZE, 1),
+            len(rows),
+            math.ceil(current / len(rows)),
+        ),
+        block=False,
     )
 
 
@@ -219,5 +227,5 @@ if __name__ == "__main__":
     results = sorted(results, key=lambda x: x[1])
     for func, current, peak, rows, bytes_per_object in results:
         print(
-            f"{func.__name__[6:].upper():<10}: Memory: {current:,} bytes  Instances: {rows:,}  Object Size: {bytes_per_object:,} bytes"
+            f"{func.__name__[6:].upper():<10}:  Memory: {current} MB  Peak: {peak} MB  Instances: {rows:,}  Object Size: {bytes_per_object:,} bytes"
         )
