@@ -1,4 +1,4 @@
-"""readrides.py - Finds which data structures are the most memory efficient.
+"""memory_use_by_datastructure.py - Finds which data structures are the most memory efficient.
 Using city bus route data from the Chicago Transit Authority (CTA) containing 
 over half-a-million rows (trips) to build a large collection of objects. 
 The tracemalloc package determines how much the memory is being consumed.  
@@ -22,7 +22,9 @@ import math
 from collections import namedtuple
 from multiprocessing import Process, Queue
 from dataclasses import dataclass
-from typing import List, Tuple, Dict, NamedTuple, Union, Callable
+
+# from typing import List, Tuple, Dict, NamedTuple, Union, Callable
+from read_bus_rides import read_rides
 
 
 class Row:
@@ -152,27 +154,6 @@ def build_dataclass(row: List[str]) -> DataclassRow:
         A dataclass containing the route, date, daytype, and rides attributes.
     """
     return DataclassRow(row[0], row[1], row[2], row[3])
-
-
-def read_rides(filename: str, func: Callable) -> DataCollection:
-    """Reads in the CTA bus data, using a function to build the data container.
-
-    Args:
-        filename: The relative path to the data file
-        func:     The function to construct the data container
-
-    Return:
-        A list of data structures or class instances for a row of data.
-    """
-
-    records = []
-    with open(filename) as f:
-        rows = csv.reader(f)
-        headings = next(rows)
-        for row in rows:
-            record = func(row)
-            records.append(record)
-    return records
 
 
 def measure_memory(filename: str, func: Callable, queue: Queue) -> None:
