@@ -14,7 +14,7 @@ class TypedStock(TypedDict):
 def read_portfolio(
     filename: str,
 ) -> list[TypedStock]:
-    """Reads a file of stock data and returns list of dicts with name, shares and price."""
+    """Reads a file of stock data and returns list of TypedStock objects."""
     portfolio = []
     with gzip.open(filename, "rt") as f:
         rows = csv.reader(f)
