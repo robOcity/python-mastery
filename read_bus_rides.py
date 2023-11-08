@@ -3,7 +3,7 @@
 import csv
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, Dict, NamedTuple, Union, Callable
+from typing import Callable, TypeVar, List, Tuple, Dict, NamedTuple, Union, Callable
 
 
 class Row:
@@ -57,9 +57,6 @@ class DataclassRow:
     date: str
     daytype: str
     rides: str
-
-
-DataCollection = List[Union[Dict, Tuple, NamedTuple, Row, SlotsRow, DataclassRow]]
 
 
 def build_tuple(row: List[str]) -> Tuple[str, str, str, str]:
@@ -135,7 +132,10 @@ def build_dataclass(row: List[str]) -> DataclassRow:
     return DataclassRow(row[0], row[1], row[2], row[3])
 
 
-def read_rides(filename: str, func: Callable) -> DataCollection:
+T = TypeVar("T")
+
+
+def read_rides(filename: str, func: Callable[..., T]) -> List[T]:
     """Reads in the CTA bus data, using a function to build the data container.
 
     Args:
@@ -143,7 +143,7 @@ def read_rides(filename: str, func: Callable) -> DataCollection:
         func:     The function to construct the data container
 
     Return:
-        A list of data structures or class instances for a row of data.
+        A list of data structures or class instance containing a row of data.
     """
 
     records = []
